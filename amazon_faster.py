@@ -9,18 +9,28 @@ import re
 
 # ==================== 🎯 核心配置区 ====================
 # 【改动1】将一长串文本改为了关键词列表
+# SEARCH_KEYWORDS = [
+#     "computer desk", 
+#     "office desk", 
+#     "standing desk", 
+#     "writing desk", 
+#     "gaming desk", 
+#     "workstation"
+# ]
+
 SEARCH_KEYWORDS = [
-    "computer desk", 
-    "office desk", 
-    "standing desk", 
-    "writing desk", 
-    "gaming desk", 
-    "workstation"
+    "dining table", 
+    "vanity table", 
+    "kitchen island",
+    "bar counter",
+    "pub table",
+    "makeup desk"
 ]
+#useful_table
 
 PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "focus_table"     
-SAVE_FOLDER_NAME = "focus_table" 
+CUSTOM_ITEM_NAME = "useful_table"     
+SAVE_FOLDER_NAME = "useful_table" 
 MAX_WORKERS = 10  # 并发下载图片的线程数
 # =======================================================
 
