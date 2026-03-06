@@ -8,10 +8,17 @@ import random
 import re
 
 # ==================== 🎯 核心配置区 ====================
-SEARCH_KEYWORD = "computer desk . office desk . standing desk . writing desk . gaming desk . workstation ." #focus_table
-# SEARCH_KEYWORD = "dining table . vanity table . kitchen island . bar counter . pub table . makeup desk ." #useful_table
+# 【改动1】将一长串文本改为了关键词列表
+SEARCH_KEYWORDS = [
+    "computer desk", 
+    "office desk", 
+    "standing desk", 
+    "writing desk", 
+    "gaming desk", 
+    "workstation"
+]
 
-MAX_PAGES = 15                   
+PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
 CUSTOM_ITEM_NAME = "focus_table"     
 SAVE_FOLDER_NAME = "focus_table" 
 MAX_WORKERS = 10  # 并发下载图片的线程数
@@ -56,107 +63,110 @@ if __name__ == "__main__":
     print("🚀 正在启动浏览器...")
     co = ChromiumOptions().set_paths(browser_path=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
     co.set_argument('--disable-blink-features=AutomationControlled')
-    
-    # 【提速秘籍 1】设置页面加载策略为 eager（只要HTML结构出来就跑，不等图片和广告脚本）
     co.set_load_mode('eager') 
     
     browser = ChromiumPage(co)
     tab = browser.latest_tab
-    
-    # 【提速秘籍 2】将页面加载硬超时缩短到 5 秒
     tab.set.timeouts(page_load=5) 
 
     all_results = []
-    seen_asins = set()
+    seen_asins = set() # 全局去重，不同关键词搜到同一个商品不会重复下载
+    
+    is_first_scan = True # 用于控制只在第一次打开网页时进行人工安检
 
-    for page in range(1, MAX_PAGES + 1):
-        print(f"\n📄 正在极速扫描第 {page} 页...")
-        search_url = f"https://www.amazon.com/s?k={SEARCH_KEYWORD.replace(' ', '+')}&page={page}"
+    # 【改动2】外层循环遍历所有关键词，内层循环遍历页数
+    for keyword in SEARCH_KEYWORDS:
+        print(f"\n=========================================")
+        print(f"🔍 正在切换搜索词: 【{keyword}】")
+        print(f"=========================================")
         
-        try:
-            tab.get(search_url)
-        except Exception:
-            # 如果5秒到了还在转圈，强行停止加载，继续往下抓取
-            tab.stop_loading()
-        
-        # 人工安检 (仅第一页)
-        if page == 1:
-            print("\n" + "⚠️ "*20)
-            print("【人工安检环节】请通过验证码 / 更改美国邮编...")
-            input("👉 确认无误后，按下【回车键 (Enter)】继续！")
-            print("⚠️ "*20 + "\n")
-            tab.refresh()
-            # 刷新后智能等待商品卡片出现
+        for page in range(1, PAGES_PER_KEYWORD + 1):
+            print(f"📄 正在极速扫描 【{keyword}】 的第 {page} 页...")
+            search_url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}&page={page}"
+            
+            try:
+                tab.get(search_url)
+            except Exception:
+                tab.stop_loading()
+            
+            # 人工安检 (仅在整个程序的第一个网页触发一次)
+            if is_first_scan:
+                print("\n" + "⚠️ "*20)
+                print("【人工安检环节】请通过验证码 / 更改美国邮编...")
+                input("👉 确认无误后，按下【回车键 (Enter)】继续！")
+                print("⚠️ "*20 + "\n")
+                tab.refresh()
+                is_first_scan = False
+                try:
+                    tab.wait.eles_loaded('xpath://div[@data-asin and string-length(@data-asin)=10]', timeout=5)
+                except:
+                    pass
+
+            # 智能等待
             try:
                 tab.wait.eles_loaded('xpath://div[@data-asin and string-length(@data-asin)=10]', timeout=5)
             except:
-                pass
+                pass 
 
-        # 【提速秘籍 3】智能等待。只要商品卡片刷出来了，立刻开始动作
-        try:
-            tab.wait.eles_loaded('xpath://div[@data-asin and string-length(@data-asin)=10]', timeout=5)
-        except:
-            pass # 超时没出就算了，直接往下走看看能不能抓到
-
-        # 【提速秘籍 4】加快滚动频率，触发懒加载
-        tab.scroll.to_half()
-        time.sleep(0.3) 
-        tab.scroll.to_bottom()
-        time.sleep(0.5) 
-        
-        # 提取当前页所有的商品卡片
-        product_cards = tab.eles('xpath://div[@data-asin and string-length(@data-asin)=10]')
-        
-        if not product_cards:
-            print(f"⚠️ 第 {page} 页没有找到商品卡片！可能是被验证码拦截，短暂等待...")
-            time.sleep(2)
+            # 加快滚动频率
+            tab.scroll.to_half()
+            time.sleep(0.3) 
+            tab.scroll.to_bottom()
+            time.sleep(0.5) 
             
-        for card in product_cards:
-            try:
-                asin = card.attr('data-asin')
-                if not asin or asin in seen_asins:
-                    continue
+            # 提取当前页所有的商品卡片
+            product_cards = tab.eles('xpath://div[@data-asin and string-length(@data-asin)=10]')
+            
+            if not product_cards:
+                print(f"⚠️ 第 {page} 页没有找到商品卡片！可能是被验证码拦截，短暂等待...")
+                time.sleep(2)
                 
-                # 在卡片内寻找标题和图片
-                img_ele = card.ele('tag:img')
-                title_ele = card.ele('tag:h2')
-                
-                if not img_ele:
-                    continue
+            for card in product_cards:
+                try:
+                    asin = card.attr('data-asin')
+                    if not asin or asin in seen_asins:
+                        continue # 如果这个商品在之前的关键词里抓过了，直接跳过
                     
-                thumb_url = img_ele.attr('src')
-                product_name = title_ele.text if title_ele else "N/A"
-                clean_url = f"https://www.amazon.com/dp/{asin}"
+                    img_ele = card.ele('tag:img')
+                    title_ele = card.ele('tag:h2')
+                    
+                    if not img_ele:
+                        continue
+                        
+                    thumb_url = img_ele.attr('src')
+                    product_name = title_ele.text if title_ele else "N/A"
+                    clean_url = f"https://www.amazon.com/dp/{asin}"
+                    
+                    high_res_url = get_high_res_url(thumb_url)
+                    image_filename = f"{CUSTOM_ITEM_NAME}_{asin}.jpg"
+                    
+                    all_results.append({
+                        'ASIN': asin,
+                        'Original_Name': product_name,
+                        'Label': CUSTOM_ITEM_NAME,
+                        'Image': image_filename,
+                        'URL': clean_url,
+                        'High_Res_URL': high_res_url,
+                        'Save_Dir': image_save_directory
+                    })
+                    seen_asins.add(asin) # 记录下抓取过的 ASIN
+                except Exception as e:
+                    pass
+                    
+            if page < PAGES_PER_KEYWORD:
+                time.sleep(random.uniform(0.5, 1))
                 
-                # 转换高清图URL
-                high_res_url = get_high_res_url(thumb_url)
-                image_filename = f"{CUSTOM_ITEM_NAME}_{asin}.jpg"
-                
-                all_results.append({
-                    'ASIN': asin,
-                    'Original_Name': product_name,
-                    'Label': CUSTOM_ITEM_NAME,
-                    'Image': image_filename,
-                    'URL': clean_url,
-                    'High_Res_URL': high_res_url,
-                    'Save_Dir': image_save_directory
-                })
-                seen_asins.add(asin)
-            except Exception as e:
-                pass
-                
-        # 翻页缓冲时间缩短，模拟正常的点击间隔
-        if page < MAX_PAGES:
-            time.sleep(random.uniform(0.5, 1))
+        # 换词的时候多休息一下，避免被封
+        time.sleep(random.uniform(1.5, 3))
 
     browser.quit()
-    print(f"\n🎯 网页扫描完毕！共提取 {len(all_results)} 个商品。开始多线程极速拔图...")
+    print(f"\n🎯 网页扫描完毕！去重后共提取 {len(all_results)} 个商品。开始多线程极速拔图...")
 
     # 2. 多线程并发下载图片
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         executor.map(download_image_task, all_results)
 
-    # 3. 保存 Excel (清理掉不需要导出到Excel的辅助列)
+    # 3. 保存 Excel
     df = pd.DataFrame(all_results)
     if not df.empty:
         df = df.drop(columns=['High_Res_URL', 'Save_Dir']) 
