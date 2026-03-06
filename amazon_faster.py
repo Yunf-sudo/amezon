@@ -34,6 +34,8 @@ SAVE_FOLDER_NAME = "useful_table"
 MAX_WORKERS = 10  # 并发下载图片的线程数
 # =======================================================
 
+
+
 def get_high_res_url(thumb_url):
     """通过正则清洗亚马逊图片URL，直接把缩略图变成高清大图URL"""
     return re.sub(r'\._.*?_\.', '.', thumb_url)
