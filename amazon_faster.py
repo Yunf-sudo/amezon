@@ -29,19 +29,20 @@ import re
 #useful_table
 
 SEARCH_KEYWORDS = [
-    "wardrobe", 
-    "dresser", 
-    "chest of drawers",
-    "shoe cabinet",
-    "kitchen cabinet",
-    "closed storage cabinet"
-    "armoire"
+    "bed", 
+    "bed frame", 
+    "bunk bed",
+    "canopy bed",
+    "sofa bed",
+    "daybed",
+    "folding bed",
+    "queen size bed"
 ]
 
 
 PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "private_cabinet"     
-SAVE_FOLDER_NAME = "private_cabinet" 
+CUSTOM_ITEM_NAME = "bed"     
+SAVE_FOLDER_NAME = "bed" 
 MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
