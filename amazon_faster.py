@@ -29,19 +29,19 @@ import re
 #useful_table
 
 SEARCH_KEYWORDS = [
-    "tv stand", 
-    "bookshelf", 
-    "bookcase",
-    "display cabinet",
-    "wine cabinet",
-    "large storage cabinet"
-    "sideboard"
+    "wardrobe", 
+    "dresser", 
+    "chest of drawers",
+    "shoe cabinet",
+    "kitchen cabinet",
+    "closed storage cabinet"
+    "armoire"
 ]
 
 
 PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "pulic_cabinet"     
-SAVE_FOLDER_NAME = "public_cabinet" 
+CUSTOM_ITEM_NAME = "private_cabinet"     
+SAVE_FOLDER_NAME = "private_cabinet" 
 MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
