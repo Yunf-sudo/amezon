@@ -18,20 +18,31 @@ import re
 #     "workstation"
 # ]
 
-SEARCH_KEYWORDS = [
-    "dining table", 
-    "vanity table", 
-    "kitchen island",
-    "bar counter",
-    "pub table",
-    "makeup desk"
-]
+# SEARCH_KEYWORDS = [
+#     "dining table", 
+#     "vanity table", 
+#     "kitchen island",
+#     "bar counter",
+#     "pub table",
+#     "makeup desk"
+# ]
 #useful_table
 
+SEARCH_KEYWORDS = [
+    "tv stand", 
+    "bookshelf", 
+    "bookcase",
+    "display cabinet",
+    "wine cabinet",
+    "large storage cabinet"
+    "sideboard"
+]
+
+
 PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "useful_table"     
-SAVE_FOLDER_NAME = "useful_table" 
-MAX_WORKERS = 10  # 并发下载图片的线程数
+CUSTOM_ITEM_NAME = "pulic_cabinet"     
+SAVE_FOLDER_NAME = "public_cabinet" 
+MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
 
