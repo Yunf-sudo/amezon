@@ -58,27 +58,27 @@ SEARCH_KEYWORDS = [
     "wall hung toilet",              # 壁挂式马桶 (通常配有极简现代风的背景墙)
 
     # 2. 🛁 浴缸 (主攻独立浴缸，是获取奢华浴室场景图的终极密码)
-    "freestanding bathtub",          # 独立浴缸 (强烈推荐，出图质量极高)
-    "clawfoot tub",                  # 复古爪脚浴缸
-    "acrylic soaking tub",           # 亚克力泡澡缸
-    "alcove bathtub",                # 嵌入式浴缸 (通常带三面精美的瓷砖墙壁)
+    # "freestanding bathtub",          # 独立浴缸 (强烈推荐，出图质量极高)
+    # "clawfoot tub",                  # 复古爪脚浴缸
+    # "acrylic soaking tub",           # 亚克力泡澡缸
+    # "alcove bathtub",                # 嵌入式浴缸 (通常带三面精美的瓷砖墙壁)
 
-    # 3. 🚿 淋浴 (主攻玻璃隔断和高端淋浴屏)
-    "frameless shower door",         # 无框玻璃淋浴门 (能抓到通透的整体淋浴间)
-    "shower enclosure",              # 整体玻璃淋浴房
-    "shower panel system",           # 淋浴屏/高端花洒 (背景必然是一整面墙的瓷砖)
-    "walk in shower kit",            # 步入式淋浴房套装
+    # # 3. 🚿 淋浴 (主攻玻璃隔断和高端淋浴屏)
+    # "frameless shower door",         # 无框玻璃淋浴门 (能抓到通透的整体淋浴间)
+    # "shower enclosure",              # 整体玻璃淋浴房
+    # "shower panel system",           # 淋浴屏/高端花洒 (背景必然是一整面墙的瓷砖)
+    # "walk in shower kit",            # 步入式淋浴房套装
 
-    # 4. 🚰 洗手台 / 浴室柜 (必须要带 "with sink"，否则会搜出一堆空柜子)
-    "bathroom vanity with sink",     # 带盆浴室柜 (最标准的搜索词)
-    "floating bathroom vanity",      # 悬浮/壁挂浴室柜 (能看到下方地面，极具现代感)
-    "double bathroom vanity",        # 双盆浴室柜 (通常对应大户型的主卫场景)
-    "pedestal sink"                  # 立柱盆 (极简，容易识别)
+    # # 4. 🚰 洗手台 / 浴室柜 (必须要带 "with sink"，否则会搜出一堆空柜子)
+    # "bathroom vanity with sink",     # 带盆浴室柜 (最标准的搜索词)
+    # "floating bathroom vanity",      # 悬浮/壁挂浴室柜 (能看到下方地面，极具现代感)
+    # "double bathroom vanity",        # 双盆浴室柜 (通常对应大户型的主卫场景)
+    # "pedestal sink"                  # 立柱盆 (极简，容易识别)
 ]
 
-PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "wash"     
-SAVE_FOLDER_NAME = "wash" 
+PAGES_PER_KEYWORD = 10            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
+CUSTOM_ITEM_NAME = "toilet"     
+SAVE_FOLDER_NAME = "toilet" 
 MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
