@@ -72,8 +72,8 @@ SEARCH_KEYWORDS = [
 ]
 
 PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "window"     
-SAVE_FOLDER_NAME = "window" 
+CUSTOM_ITEM_NAME = "light"     
+SAVE_FOLDER_NAME = "light" 
 MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
