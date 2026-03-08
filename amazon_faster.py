@@ -50,30 +50,35 @@ import re
 # ]
 
 # ==================== 🎯 亚马逊专属：灯具类爬虫搜索词 ====================
+# ==================== 🎯 亚马逊专属：卫浴水件类爬虫搜索词 ====================
 SEARCH_KEYWORDS = [
-    # 1. 吊灯 / 顶部主灯 (提供全局光场，场景图多为宽阔的客餐厅)
-    "chandelier for living room",       # 客厅大吊灯
-    "dining room pendant light",        # 餐厅垂吊灯
-    "flush mount ceiling light",        # 吸顶灯
+    # 1. 🚽 马桶 (搜高端款和连体款，背景通常最精美)
+    "one piece toilet",              # 连体马桶 (极大概率带真实卫生间场景)
+    "smart toilet with bidet",       # 智能马桶 
+    "wall hung toilet",              # 壁挂式马桶 (通常配有极简现代风的背景墙)
 
-    # 2. 落地灯 (角落能量提升，场景图旁边一定有沙发或单人椅)
-    "floor lamp for living room",       # 客厅落地灯
-    "standing lamp for bedroom",        # 卧室立灯
-    "arc floor lamp",                   # 钓鱼灯/弧形落地灯 (形态极其特殊，极具现代感)
+    # 2. 🛁 浴缸 (主攻独立浴缸，是获取奢华浴室场景图的终极密码)
+    "freestanding bathtub",          # 独立浴缸 (强烈推荐，出图质量极高)
+    "clawfoot tub",                  # 复古爪脚浴缸
+    "acrylic soaking tub",           # 亚克力泡澡缸
+    "alcove bathtub",                # 嵌入式浴缸 (通常带三面精美的瓷砖墙壁)
 
-    # 3. 台灯 / 书桌灯 (床头或文昌位照明，场景图带有桌子或床头柜)
-    "bedside table lamp",               # 床头台灯
-    "desk lamp for home office",        # 办公桌台灯
-    "banker lamp",                      # 银行家台灯 (复古绿罩台灯，极具辨识度)
+    # 3. 🚿 淋浴 (主攻玻璃隔断和高端淋浴屏)
+    "frameless shower door",         # 无框玻璃淋浴门 (能抓到通透的整体淋浴间)
+    "shower enclosure",              # 整体玻璃淋浴房
+    "shower panel system",           # 淋浴屏/高端花洒 (背景必然是一整面墙的瓷砖)
+    "walk in shower kit",            # 步入式淋浴房套装
 
-    # 4. 壁灯 / 辅助照明 (墙面氛围光，场景图带有高清墙面背景)
-    "wall sconce lighting",             # 室内壁灯
-    "bathroom vanity light"             # 浴室镜前灯 (完美配合你之前抓的洗手台)
+    # 4. 🚰 洗手台 / 浴室柜 (必须要带 "with sink"，否则会搜出一堆空柜子)
+    "bathroom vanity with sink",     # 带盆浴室柜 (最标准的搜索词)
+    "floating bathroom vanity",      # 悬浮/壁挂浴室柜 (能看到下方地面，极具现代感)
+    "double bathroom vanity",        # 双盆浴室柜 (通常对应大户型的主卫场景)
+    "pedestal sink"                  # 立柱盆 (极简，容易识别)
 ]
 
 PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "light"     
-SAVE_FOLDER_NAME = "light" 
+CUSTOM_ITEM_NAME = "wash"     
+SAVE_FOLDER_NAME = "wash" 
 MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
