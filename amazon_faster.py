@@ -29,26 +29,47 @@ import re
 #useful_table
 
 # ==================== 🎯 亚马逊专属：窗户类搜索词 ====================
-SEARCH_KEYWORDS = [
-    # 1. 直接搜实体小窗（亚马逊上卖得最多的是房车窗和工具房小窗）
-    "replacement window",      # 替换窗（标准推拉窗/平开窗）
-    "rv window",               # 房车/房舱窗户（极其标准的带框玻璃窗）
-    "shed window",             # 工具房窗户
+# SEARCH_KEYWORDS = [
+#     # 1. 直接搜实体小窗（亚马逊上卖得最多的是房车窗和工具房小窗）
+#     "replacement window",      # 替换窗（标准推拉窗/平开窗）
+#     "rv window",               # 房车/房舱窗户（极其标准的带框玻璃窗）
+#     "shed window",             # 工具房窗户
     
-    # 2. 搜百叶窗/卷帘（完美覆盖各种百叶窗形态）
-    "window blinds",           # 标准百叶窗
-    "plantation shutters",     # 宽叶木质百叶窗/折叠窗
-    "roller shades for windows", # 卷帘窗
+#     # 2. 搜百叶窗/卷帘（完美覆盖各种百叶窗形态）
+#     "window blinds",           # 标准百叶窗
+#     "plantation shutters",     # 宽叶木质百叶窗/折叠窗
+#     "roller shades for windows", # 卷帘窗
 
-    # 3. 搜窗户贴膜（绝招！这类商品的主图全是极其通透的大玻璃窗）
-    "window privacy film",     # 隐私窗膜
-    "stained glass window film", # 彩色玻璃贴膜
+#     # 3. 搜窗户贴膜（绝招！这类商品的主图全是极其通透的大玻璃窗）
+#     "window privacy film",     # 隐私窗膜
+#     "stained glass window film", # 彩色玻璃贴膜
 
-    # 4. 搜窗帘（完美覆盖落地窗、大尺寸双开窗）
-    "floor to ceiling curtains", # 落地窗帘（场景图必带落地大窗）
-    "sliding glass door curtains" # 推拉玻璃门/阳台大窗
+#     # 4. 搜窗帘（完美覆盖落地窗、大尺寸双开窗）
+#     "floor to ceiling curtains", # 落地窗帘（场景图必带落地大窗）
+#     "sliding glass door curtains" # 推拉玻璃门/阳台大窗
+# ]
+
+# ==================== 🎯 亚马逊专属：灯具类爬虫搜索词 ====================
+SEARCH_KEYWORDS = [
+    # 1. 吊灯 / 顶部主灯 (提供全局光场，场景图多为宽阔的客餐厅)
+    "chandelier for living room",       # 客厅大吊灯
+    "dining room pendant light",        # 餐厅垂吊灯
+    "flush mount ceiling light",        # 吸顶灯
+
+    # 2. 落地灯 (角落能量提升，场景图旁边一定有沙发或单人椅)
+    "floor lamp for living room",       # 客厅落地灯
+    "standing lamp for bedroom",        # 卧室立灯
+    "arc floor lamp",                   # 钓鱼灯/弧形落地灯 (形态极其特殊，极具现代感)
+
+    # 3. 台灯 / 书桌灯 (床头或文昌位照明，场景图带有桌子或床头柜)
+    "bedside table lamp",               # 床头台灯
+    "desk lamp for home office",        # 办公桌台灯
+    "banker lamp",                      # 银行家台灯 (复古绿罩台灯，极具辨识度)
+
+    # 4. 壁灯 / 辅助照明 (墙面氛围光，场景图带有高清墙面背景)
+    "wall sconce lighting",             # 室内壁灯
+    "bathroom vanity light"             # 浴室镜前灯 (完美配合你之前抓的洗手台)
 ]
-
 
 PAGES_PER_KEYWORD = 5            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
 CUSTOM_ITEM_NAME = "window"     
