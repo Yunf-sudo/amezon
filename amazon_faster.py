@@ -27,58 +27,36 @@ import re
 #     "makeup desk"
 # ]
 #useful_table
-
-# ==================== 🎯 亚马逊专属：窗户类搜索词 ====================
-# SEARCH_KEYWORDS = [
-#     # 1. 直接搜实体小窗（亚马逊上卖得最多的是房车窗和工具房小窗）
-#     "replacement window",      # 替换窗（标准推拉窗/平开窗）
-#     "rv window",               # 房车/房舱窗户（极其标准的带框玻璃窗）
-#     "shed window",             # 工具房窗户
-    
-#     # 2. 搜百叶窗/卷帘（完美覆盖各种百叶窗形态）
-#     "window blinds",           # 标准百叶窗
-#     "plantation shutters",     # 宽叶木质百叶窗/折叠窗
-#     "roller shades for windows", # 卷帘窗
-
-#     # 3. 搜窗户贴膜（绝招！这类商品的主图全是极其通透的大玻璃窗）
-#     "window privacy film",     # 隐私窗膜
-#     "stained glass window film", # 彩色玻璃贴膜
-
-#     # 4. 搜窗帘（完美覆盖落地窗、大尺寸双开窗）
-#     "floor to ceiling curtains", # 落地窗帘（场景图必带落地大窗）
-#     "sliding glass door curtains" # 推拉玻璃门/阳台大窗
-# ]
-
-# ==================== 🎯 亚马逊专属：灯具类爬虫搜索词 ====================
-# ==================== 🎯 亚马逊专属：卫浴水件类爬虫搜索词 ====================
+# ==================== 🎯 亚马逊专属：室内植物/生旺化煞类爬虫搜索词 ====================
 SEARCH_KEYWORDS = [
-    # 1. 🚽 马桶 (搜高端款和连体款，背景通常最精美)
-    "one piece toilet",              # 连体马桶 (极大概率带真实卫生间场景)
-    "smart toilet with bidet",       # 智能马桶 
-    "wall hung toilet",              # 壁挂式马桶 (通常配有极简现代风的背景墙)
+    # 1. 🌳 大型落地植物 (主攻客厅角落、沙发旁、电视柜旁，大型能量锚点)
+    "large artificial floor plant",     # 大型室内落地仿真植物 (🔥极品词，场景图完美)
+    "tall fake tree for living room",   # 客厅高大仿真树 (背景必有高档沙发或大窗户)
+    "fiddle leaf fig tree indoor",      # 琴叶榕 (欧美中产阶级最爱，阔叶聚气代表)
+    "large snake plant in pot",         # 大型虎皮兰 (尖叶，风水常用于化煞挡灾)
+    "money tree plant large",           # 大型发财树 (财位标配)
 
-    # 2. 🛁 浴缸 (主攻独立浴缸，是获取奢华浴室场景图的终极密码)
-    # "freestanding bathtub",          # 独立浴缸 (强烈推荐，出图质量极高)
-    # "clawfoot tub",                  # 复古爪脚浴缸
-    # "acrylic soaking tub",           # 亚克力泡澡缸
-    # "alcove bathtub",                # 嵌入式浴缸 (通常带三面精美的瓷砖墙壁)
+    # 2. 🪴 中型盆栽/桌面植物 (主攻茶几、玄关桌、办公桌，中坚能量调节)
+    "desktop plant in ceramic pot",     # 陶瓷盆桌面植物 (带陶瓷盆的图更显家居质感)
+    "zz plant indoor live",             # 金钱树 (Zamioculcas zamiifolia，极具辨识度的排列叶片)
+    "peace lily live plant",            # 白掌/一帆风顺 (开白花，常放在案头或卫生间化阴)
+    "monstera deliciosa plant",         # 龟背竹 (极具现代家居设计感，叶片有裂纹)
 
-    # # 3. 🚿 淋浴 (主攻玻璃隔断和高端淋浴屏)
-    # "frameless shower door",         # 无框玻璃淋浴门 (能抓到通透的整体淋浴间)
-    # "shower enclosure",              # 整体玻璃淋浴房
-    # "shower panel system",           # 淋浴屏/高端花洒 (背景必然是一整面墙的瓷砖)
-    # "walk in shower kit",            # 步入式淋浴房套装
+    # 3. 🎋 小型/风水特化植物 (主攻书桌、置物架、窗台，微观能量点缀)
+    "lucky bamboo plant indoor",        # 富贵竹 (通常在水培玻璃瓶里，带有浓烈的风水意象)
+    "indoor bonsai tree live",          # 室内盆景树 (松柏类微缩盆景，极其考验模型对复杂边缘的识别)
+    "succulent plants in cute pots",    # 多肉植物盆栽组合 (体积小，常排成一排)
+    "small fake desk plants",           # 桌面小型仿真植物 (经常摆在电脑显示器旁边)
 
-    # # 4. 🚰 洗手台 / 浴室柜 (必须要带 "with sink"，否则会搜出一堆空柜子)
-    # "bathroom vanity with sink",     # 带盆浴室柜 (最标准的搜索词)
-    # "floating bathroom vanity",      # 悬浮/壁挂浴室柜 (能看到下方地面，极具现代感)
-    # "double bathroom vanity",        # 双盆浴室柜 (通常对应大户型的主卫场景)
-    # "pedestal sink"                  # 立柱盆 (极简，容易识别)
+    # 4. 🌿 垂吊/藤蔓植物 (主攻高处书架、吊顶、窗边，垂直空间能量流动)
+    "hanging plants artificial indoor", # 室内悬挂/垂吊植物 (往下垂的枝条，常在书架顶端)
+    "pothos live plant trailing",       # 绿萝藤蔓 (最常见的室内垂吊植物)
+    "fake ivy vines for bedroom"        # 卧室常春藤假藤蔓 (常挂在墙上或床头)
 ]
 
 PAGES_PER_KEYWORD = 10            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "toilet"     
-SAVE_FOLDER_NAME = "toilet" 
+CUSTOM_ITEM_NAME = "Aplant"     
+SAVE_FOLDER_NAME = "Aplant" 
 MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
