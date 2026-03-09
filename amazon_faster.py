@@ -28,30 +28,26 @@ import re
 # ]
 #useful_table
 # ==================== 🎯 亚马逊专属：室内植物/生旺化煞类爬虫搜索词 ====================
+# ==================== 🎯 亚马逊反套路：真正的“门”爬虫搜索词 ====================
 SEARCH_KEYWORDS = [
-    # 1. 🌳 大型落地植物 (主攻客厅角落、沙发旁、电视柜旁，大型能量锚点)
-    "large artificial floor plant",     # 大型室内落地仿真植物 (🔥极品词，场景图完美)
-    "tall fake tree for living room",   # 客厅高大仿真树 (背景必有高档沙发或大窗户)
-    "fiddle leaf fig tree indoor",      # 琴叶榕 (欧美中产阶级最爱，阔叶聚气代表)
-    "large snake plant in pot",         # 大型虎皮兰 (尖叶，风水常用于化煞挡灾)
-    "money tree plant large",           # 大型发财树 (财位标配)
+    # 1. 🚪 室内平开门 (必须用 "slab" 门板 或 "prehung" 带框门 这两个行业黑话)
+    "interior solid wood door slab",    # 室内实木门板 (绝对搜不出门锁，全是整扇门)
+    "prehung interior door",            # 带门框的室内门 (场景图完美展示气口和门框)
+    "french doors interior",            # 室内法式双开门 (带有大面积玻璃的极品双开门)
 
-    # 2. 🪴 中型盆栽/桌面植物 (主攻茶几、玄关桌、办公桌，中坚能量调节)
-    "desktop plant in ceramic pot",     # 陶瓷盆桌面植物 (带陶瓷盆的图更显家居质感)
-    "zz plant indoor live",             # 金钱树 (Zamioculcas zamiifolia，极具辨识度的排列叶片)
-    "peace lily live plant",            # 白掌/一帆风顺 (开白花，常放在案头或卫生间化阴)
-    "monstera deliciosa plant",         # 龟背竹 (极具现代家居设计感，叶片有裂纹)
+    # 2. 🪟 谷仓门 / 推拉门 (亚马逊上卖得最好的整门，背景图极其奢华)
+    "sliding barn door slab",           # 滑动谷仓门板 (千万别只搜 barn door，不然全是上面的滑轨五金件)
+    "glass sliding closet doors",       # 玻璃推拉衣柜门 (大面积落地，带卧室背景)
+    "pocket door frame kit with door",  # 隐藏式推拉门/口袋门 (完美展示门嵌进墙里的结构)
 
-    # 3. 🎋 小型/风水特化植物 (主攻书桌、置物架、窗台，微观能量点缀)
-    "lucky bamboo plant indoor",        # 富贵竹 (通常在水培玻璃瓶里，带有浓烈的风水意象)
-    "indoor bonsai tree live",          # 室内盆景树 (松柏类微缩盆景，极其考验模型对复杂边缘的识别)
-    "succulent plants in cute pots",    # 多肉植物盆栽组合 (体积小，常排成一排)
-    "small fake desk plants",           # 桌面小型仿真植物 (经常摆在电脑显示器旁边)
+    # 3. 🪜 折叠门 (材质轻，亚马逊上极多，常用于厨房或储物间)
+    "accordion folding door interior",  # 室内折叠门 (PVC或木质，图里一定能看到整个通道)
+    "bifold closet door wood",          # 木质双折门 (百叶窗形态的对折门，极其常见)
 
-    # 4. 🌿 垂吊/藤蔓植物 (主攻高处书架、吊顶、窗边，垂直空间能量流动)
-    "hanging plants artificial indoor", # 室内悬挂/垂吊植物 (往下垂的枝条，常在书架顶端)
-    "pothos live plant trailing",       # 绿萝藤蔓 (最常见的室内垂吊植物)
-    "fake ivy vines for bedroom"        # 卧室常春藤假藤蔓 (常挂在墙上或床头)
+    # 4. 🛡️ 入户大门 / 庭院门 (靠“偷家”战术，搜必须挂在整个门上的大件)
+    "front door slab exterior",         # 入户外门板
+    "magnetic screen door for french door", # 法式门防蚊软门帘 (商家为了展示门帘，必须拍一整扇极其气派的庭院双开门！)
+    "patio glass sliding door"          # 庭院玻璃推拉门
 ]
 
 PAGES_PER_KEYWORD = 10            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
@@ -120,7 +116,10 @@ if __name__ == "__main__":
         
         for page in range(1, PAGES_PER_KEYWORD + 1):
             print(f"📄 正在极速扫描 【{keyword}】 的第 {page} 页...")
-            search_url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}&page={page}"
+            # 我们在关键词后面强行加上 -lock -knob -handle -stopper -hardware 
+            # 告诉亚马逊：我不要锁！不要把手！不要挡条！不要五金件！
+            black_magic_filter = "+-lock+-knob+-handle+-stopper+-hardware"
+            search_url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}{black_magic_filter}&page={page}"
             
             try:
                 tab.get(search_url)
