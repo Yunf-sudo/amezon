@@ -51,8 +51,8 @@ SEARCH_KEYWORDS = [
 ]
 
 PAGES_PER_KEYWORD = 10            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "Aplant"     
-SAVE_FOLDER_NAME = "Aplant" 
+CUSTOM_ITEM_NAME = "Adoor"     
+SAVE_FOLDER_NAME = "Adoor" 
 MAX_WORKERS = 20  # 并发下载图片的线程数
 # =======================================================
 
