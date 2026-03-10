@@ -1,0 +1,18 @@
+path: ../RT_DETR_Dataset
+train: images/train
+val: images/val
+names:
+  0: bed
+  1: cabinet
+  2: chair
+  3: cook
+  4: door
+  5: light
+  6: mirror
+  7: plant
+  8: shower
+  9: table
+  10: toilet
+  11: window
+  12: vanity
+  13: bathtub

@@ -14,14 +14,31 @@ from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 from segment_anything import build_sam, SamPredictor
 
 # ================= 1. 配置区 =================
-IMAGE_DIR = "dining_chair"          # 你的图片文件夹
-OUTPUT_LABEL_DIR = "dining_chair_label"   # 生成的 YOLO 标签保存路径
+IMAGE_DIR = "Ayugang"          # 你的图片文件夹
+# IMAGE_DIR = "Acabinet"          # 你的图片文件夹
+# OUTPUT_LABEL_DIR = "A2_lable"   # 生成的 YOLO 标签保存路径
+OUTPUT_LABEL_DIR = "A13_lable"   # 生成的 YOLO 
 # TEXT_PROMPT = "potted plant . houseplant . artificial plant . shrub . bush . fern . pine tree . monstera . succulent . bamboo ."  # 植物
 # TEXT_PROMPT = "mirror . wall mirror . floor mirror . full-length mirror . vanity mirror . mirror frame ." # 镜子
-TEXT_PROMPT = "dining chair . kitchen chair . side chair . wooden chair . four-legged chair . dining room chair . chair ."
-BOX_THRESHOLD = 0.40              # 框置信度
-TEXT_THRESHOLD = 0.40             # 文本匹配度
-CLASS_ID = 2                      # YOLO 类别 ID
+# TEXT_PROMPT = "bed . bed frame . bunk bed . canopy bed . sofa bed . daybed . folding bed . murphy bed . sleeping furniture ."
+# TEXT_PROMPT = "chair . seat . seating furniture . office chair . dining chair . gaming chair . armchair . lounge chair . bar stool . folding chair . rocking chair . recliner . desk chair . swivel chair . bean bag chair . wooden chair . plastic chair . metal chair . leather chair . chair with wheels . four-legged chair . high back chair . stool . seating ."
+# TEXT_PROMPT = "wooden cabinet . wardrobe . dresser . tv stand . bookcase . cupboard . sideboard . shoe cabinet . nightstand . storage furniture ."
+# TEXT_PROMPT = "gas stove . cooktop . gas range . electric stove . induction cooktop . oven . built-in oven . wall oven . microwave . microwave oven . over-the-range microwave . range hood . kitchen appliances ."
+# TEXT_PROMPT = "door . front door . wooden door . bedroom door . interior door . sliding door . sliding glass door . french doors . barn door . pocket door . hidden door . door frame . open door . closed door ."
+# TEXT_PROMPT = "lamp . light fixture . chandelier . pendant light . ceiling light . floor lamp . standing lamp . table lamp . desk lamp . wall sconce . bedside lamp . lighting ."
+# TEXT_PROMPT = "mirror . wall mirror . floor mirror . full-length mirror . bathroom vanity mirror . round mirror . framed mirror . reflective glass . vanity mirror ."
+# TEXT_PROMPT = "plant . potted plant . houseplant . indoor plant . artificial plant . large floor plant . tree in pot . small desk plant . hanging plant . vase with flowers . fern . monstera . bonsai . succulent ."
+# TEXT_PROMPT = "bathtub . freestanding tub . bath tub . clawfoot tub . acrylic bathtub . alcove tub . shower . shower enclosure . glass shower door . walk-in shower . shower head . shower system ."
+# TEXT_PROMPT = "table . dining table . coffee table . center table . side table . end table . desk . office desk . computer desk . console table . wooden table . glass table ."
+# TEXT_PROMPT = "toilet . commode . water closet . toilet bowl . smart toilet . wall hung toilet . one piece toilet ."
+# TEXT_PROMPT = "window . glass window . window frame . sliding window . floor to ceiling window . large panoramic window . window blinds . window with curtains . casement window ."
+# TEXT_PROMPT = "bathroom vanity . bathroom sink . washbasin . pedestal sink . vanity cabinet . sink basin . double vanity . floating vanity ."
+# 涵盖：统称 + 独立式 + 嵌入式 + 特殊形态（如复古爪脚、按摩浴缸）
+TEXT_PROMPT = "bathtub . bath tub . freestanding tub . clawfoot tub . soaking tub . alcove bathtub . acrylic bathtub . hot tub . jacuzzi . wash tub ."
+
+BOX_THRESHOLD = 0.4             # 框置信度
+TEXT_THRESHOLD = 0.41             # 文本匹配度
+CLASS_ID = 13                      # YOLO 类别 ID
 
 SAM_WEIGHTS = "weights/sam_vit_h_4b8939.pth" # 之前下载的 SAM 权重保持不变
 # ============================================
@@ -33,10 +50,12 @@ print(f"正在使用 {device.upper()} 模式运行...")
 print("正在加载纯 Python 版 GroundingDINO 和 SAM，请稍候...")
 
 # 1. 加载 HuggingFace 版的 GroundingDINO (它会自动下载并缓存轻量级权重，不会报 _C 错误)
-processor = AutoProcessor.from_pretrained("IDEA-Research/grounding-dino-tiny")
+# 1. 【离线模式】直接从本地文件夹加载 GroundingDINO
+processor = AutoProcessor.from_pretrained("./local_gd_model/processor", local_files_only=True)
 gd_model = AutoModelForZeroShotObjectDetection.from_pretrained(
-    "IDEA-Research/grounding-dino-base",
-    attn_implementation="eager"  # 👈 强行命令模型使用 PyTorch 原生标准数学计算，绝对不准用任何加速器！
+    "./local_gd_model/model",
+    attn_implementation="eager",
+    local_files_only=True  # 👈 这个参数是关键！强迫它不准联网找，只读本地！
 ).to(device)
 # 2. 加载本地的 SAM
 sam_predictor = SamPredictor(build_sam(checkpoint=SAM_WEIGHTS).to(device))
@@ -49,10 +68,13 @@ for filename in os.listdir(IMAGE_DIR):
     image_path = os.path.join(IMAGE_DIR, filename)
     print(f"\n---> 正在处理: {filename}")
     
-    # 读图
-    image = Image.open(image_path).convert("RGB")
-    image_np = np.array(image)
-    
+# 替换后的代码：加入 try-except 保护罩
+    try:
+        image = Image.open(image_path).convert("RGB")
+        image_np = np.array(image)
+    except Exception as e:
+        print(f"  ⚠️ [警告] 图片严重损坏或无法读取，已自动跳过: {filename} (原因: {e})")
+        continue  # 直接跳过这张坏图，继续处理下一张！
     # 【第一阶段】：GroundingDINO 检测
     inputs = processor(images=image, text=TEXT_PROMPT, return_tensors="pt").to(device)
     with torch.no_grad():

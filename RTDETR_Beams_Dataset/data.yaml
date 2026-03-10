@@ -1,0 +1,8 @@
+path: ./  # 数据集根目录
+train: images/train
+val: images/train  # 演示用，暂用训练集兼当验证集，正式训练前可自行划分 10% 到 val 文件夹
+
+# 类别信息
+nc: 1
+names:
+  0: beam

@@ -3,9 +3,9 @@ import shutil
 
 # ==================== 配置区 ====================
 # 你的两个源文件夹名称
-SOURCE_FOLDERS = ["cook", "cookkk"]  
+SOURCE_FOLDERS = ["A/1", "A/2", "A/3", "A/4", "A/5"]  
 # 合并后的目标文件夹名称
-TARGET_FOLDER = "Acook"                       
+TARGET_FOLDER = "B"                       
 # ================================================
 
 # 1. 创建目标文件夹（如果不存在会自动创建）
@@ -35,7 +35,7 @@ for folder in SOURCE_FOLDERS:
             
         # 2. 生成新文件名 (例如: 00001mirror.jpg)
         # {count:05d} 的意思是把数字补齐为 5 位数，前面自动补 0
-        new_filename = f"{count:05d}cook{ext}"
+        new_filename = f"{count:05d}yugang{ext}"
         
         # 构建完整路径
         src_path = os.path.join(folder, filename)

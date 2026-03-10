@@ -2,9 +2,9 @@ import os
 import cv2
 
 # ==== 配置区 (检查路径是否正确) ====
-IMAGE_DIR = "mirror"        # 你的原图文件夹
-LABEL_DIR = "mirror_label"        # 你的txt矩形框标签文件夹
-OUTPUT_DIR = "mirror_check"      # 预览图保存的文件夹（自动创建）
+IMAGE_DIR = "Alight"        # 你的原图文件夹
+LABEL_DIR = "A5_lable"        # 你的txt矩形框标签文件夹
+OUTPUT_DIR = "5_check"      # 预览图保存的文件夹（自动创建）
 # ================================
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)

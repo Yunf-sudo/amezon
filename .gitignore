@@ -27,3 +27,5 @@ bed1/bed_s09544506_Scene.jpg
 *.pth
 local_gd_model/model/config.json
 *.json
+local_gd_model/model/model.safetensors
+RT_DETR_Dataset.zip
