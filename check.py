@@ -2,9 +2,9 @@ import os
 import cv2
 
 # ==== 配置区 (检查路径是否正确) ====
-IMAGE_DIR = "C"        # 你的原图文件夹
-LABEL_DIR = "C_lable"        # 你的txt矩形框标签文件夹
-OUTPUT_DIR = "C_check"      # 预览图保存的文件夹（自动创建）
+IMAGE_DIR = "Abed"        # 你的原图文件夹
+LABEL_DIR = "Abed_labels"        # 你的txt矩形框标签文件夹
+OUTPUT_DIR = "Abed_check"      # 预览图保存的文件夹（自动创建）
 # ================================
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
