@@ -4,15 +4,22 @@ val: images/val
 names:
   0: bed
   1: cabinet
+  public_cabinet/private_cabinet
   2: chair
+  focus_chair/relax_chair
   3: cook
   4: door
+  open/close
   5: light
   6: mirror
   7: plant
+  big/small
   8: shower
   9: table
+  foucus/relax
   10: toilet
-  11: window
+  11: window(我认为大的落地窗和小的窗户对房间格局的影响是不一样的)
+  small/big 
   12: vanity
   13: bathtub
+  14: beam
