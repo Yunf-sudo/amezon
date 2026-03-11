@@ -37,7 +37,7 @@ SAM_WEIGHTS = "weights/sam_vit_h_4b8939.pth"
 # ============================================
 
 os.makedirs(OUTPUT_LABEL_DIR, exist_ok=True)
-device ="cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 print(f"🚀 正在使用 {device.upper()} 模式运行二合一标注与清洗系统...")
 print("📦 正在加载纯 Python 版 GroundingDINO 和 SAM...")
