@@ -14,31 +14,18 @@ from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 from segment_anything import build_sam, SamPredictor
 
 # ================= 1. 配置区 =================
-IMAGE_DIR = "Ayugang"          # 你的图片文件夹
+IMAGE_DIR = "B"          # 你的图片文件夹
 # IMAGE_DIR = "Acabinet"          # 你的图片文件夹
 # OUTPUT_LABEL_DIR = "A2_lable"   # 生成的 YOLO 标签保存路径
-OUTPUT_LABEL_DIR = "A13_lable"   # 生成的 YOLO 
-# TEXT_PROMPT = "potted plant . houseplant . artificial plant . shrub . bush . fern . pine tree . monstera . succulent . bamboo ."  # 植物
-# TEXT_PROMPT = "mirror . wall mirror . floor mirror . full-length mirror . vanity mirror . mirror frame ." # 镜子
-# TEXT_PROMPT = "bed . bed frame . bunk bed . canopy bed . sofa bed . daybed . folding bed . murphy bed . sleeping furniture ."
-# TEXT_PROMPT = "chair . seat . seating furniture . office chair . dining chair . gaming chair . armchair . lounge chair . bar stool . folding chair . rocking chair . recliner . desk chair . swivel chair . bean bag chair . wooden chair . plastic chair . metal chair . leather chair . chair with wheels . four-legged chair . high back chair . stool . seating ."
-# TEXT_PROMPT = "wooden cabinet . wardrobe . dresser . tv stand . bookcase . cupboard . sideboard . shoe cabinet . nightstand . storage furniture ."
-# TEXT_PROMPT = "gas stove . cooktop . gas range . electric stove . induction cooktop . oven . built-in oven . wall oven . microwave . microwave oven . over-the-range microwave . range hood . kitchen appliances ."
-# TEXT_PROMPT = "door . front door . wooden door . bedroom door . interior door . sliding door . sliding glass door . french doors . barn door . pocket door . hidden door . door frame . open door . closed door ."
-# TEXT_PROMPT = "lamp . light fixture . chandelier . pendant light . ceiling light . floor lamp . standing lamp . table lamp . desk lamp . wall sconce . bedside lamp . lighting ."
-# TEXT_PROMPT = "mirror . wall mirror . floor mirror . full-length mirror . bathroom vanity mirror . round mirror . framed mirror . reflective glass . vanity mirror ."
-# TEXT_PROMPT = "plant . potted plant . houseplant . indoor plant . artificial plant . large floor plant . tree in pot . small desk plant . hanging plant . vase with flowers . fern . monstera . bonsai . succulent ."
-# TEXT_PROMPT = "bathtub . freestanding tub . bath tub . clawfoot tub . acrylic bathtub . alcove tub . shower . shower enclosure . glass shower door . walk-in shower . shower head . shower system ."
-# TEXT_PROMPT = "table . dining table . coffee table . center table . side table . end table . desk . office desk . computer desk . console table . wooden table . glass table ."
-# TEXT_PROMPT = "toilet . commode . water closet . toilet bowl . smart toilet . wall hung toilet . one piece toilet ."
-# TEXT_PROMPT = "window . glass window . window frame . sliding window . floor to ceiling window . large panoramic window . window blinds . window with curtains . casement window ."
-# TEXT_PROMPT = "bathroom vanity . bathroom sink . washbasin . pedestal sink . vanity cabinet . sink basin . double vanity . floating vanity ."
-# 涵盖：统称 + 独立式 + 嵌入式 + 特殊形态（如复古爪脚、按摩浴缸）
-TEXT_PROMPT = "bathtub . bath tub . freestanding tub . clawfoot tub . soaking tub . alcove bathtub . acrylic bathtub . hot tub . jacuzzi . wash tub ."
+OUTPUT_LABEL_DIR = "B_lable"   # 生成的 YOLO 
 
-BOX_THRESHOLD = 0.4             # 框置信度
-TEXT_THRESHOLD = 0.41             # 文本匹配度
-CLASS_ID = 13                      # YOLO 类别 ID
+# 涵盖：统称 + 独立式 + 嵌入式 + 特殊形态（如复古爪脚、按摩浴缸）
+# TEXT_PROMPT = "bathtub . bath tub . freestanding tub . clawfoot tub . soaking tub . alcove bathtub . acrylic bathtub . hot tub . jacuzzi . wash tub ."
+TEXT_PROMPT = "exposed ceiling beam. wooden beam. steel ceiling beam."
+
+BOX_THRESHOLD = 0.3             # 框置信度
+TEXT_THRESHOLD = 0.3             # 文本匹配度
+CLASS_ID = 14                      # YOLO 类别 ID
 
 SAM_WEIGHTS = "weights/sam_vit_h_4b8939.pth" # 之前下载的 SAM 权重保持不变
 # ============================================

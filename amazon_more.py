@@ -78,7 +78,8 @@ def main():
     generate_yaml()
     
     # 1. 加载大模型 (自动使用 GPU 进行推理，极大地加速标注过程)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    device ="cpu"
     print(f"🤖 正在加载 Grounding DINO 模型 (计算设备: {device})... 首次运行需下载模型权重。")
     
     model_id = "IDEA-Research/grounding-dino-base"
@@ -111,7 +112,7 @@ def main():
             results = processor.post_process_grounded_object_detection(
                 outputs,
                 inputs.input_ids,
-                box_threshold=BOX_THRESHOLD,
+                threshold=BOX_THRESHOLD,
                 text_threshold=TEXT_THRESHOLD,
                 target_sizes=[image.size[::-1]]
             )[0]

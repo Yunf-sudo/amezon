@@ -29,3 +29,4 @@ local_gd_model/model/config.json
 *.json
 local_gd_model/model/model.safetensors
 RT_DETR_Dataset.zip
+*.zip
