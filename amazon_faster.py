@@ -8,62 +8,37 @@ import random
 import re
 
 # ==================== 🎯 核心配置区 ====================
-# 【改动1】将一长串文本改为了关键词列表
-# SEARCH_KEYWORDS = [
-#     "computer desk", 
-#     "office desk", 
-#     "standing desk", 
-#     "writing desk", 
-#     "gaming desk", 
-#     "workstation"
-# ]
-
-# SEARCH_KEYWORDS = [
-#     "dining table", 
-#     "vanity table", 
-#     "kitchen island",
-#     "bar counter",
-#     "pub table",
-#     "makeup desk"
-# ]
-#useful_table
-# ==================== 🎯 亚马逊专属：室内植物/生旺化煞类爬虫搜索词 ====================
-# ==================== 🎯 亚马逊反套路：真正的“门”爬虫搜索词 ====================
 SEARCH_KEYWORDS = [
-    # 1. 🚪 室内平开门 (必须用 "slab" 门板 或 "prehung" 带框门 这两个行业黑话)
-    "interior solid wood door slab",    # 室内实木门板 (绝对搜不出门锁，全是整扇门)
-    "prehung interior door",            # 带门框的室内门 (场景图完美展示气口和门框)
-    "french doors interior",            # 室内法式双开门 (带有大面积玻璃的极品双开门)
-
-    # 2. 🪟 谷仓门 / 推拉门 (亚马逊上卖得最好的整门，背景图极其奢华)
-    "sliding barn door slab",           # 滑动谷仓门板 (千万别只搜 barn door，不然全是上面的滑轨五金件)
-    "glass sliding closet doors",       # 玻璃推拉衣柜门 (大面积落地，带卧室背景)
-    "pocket door frame kit with door",  # 隐藏式推拉门/口袋门 (完美展示门嵌进墙里的结构)
-
-    # 3. 🪜 折叠门 (材质轻，亚马逊上极多，常用于厨房或储物间)
-    "accordion folding door interior",  # 室内折叠门 (PVC或木质，图里一定能看到整个通道)
-    "bifold closet door wood",          # 木质双折门 (百叶窗形态的对折门，极其常见)
-
-    # 4. 🛡️ 入户大门 / 庭院门 (靠“偷家”战术，搜必须挂在整个门上的大件)
-    "front door slab exterior",         # 入户外门板
-    "magnetic screen door for french door", # 法式门防蚊软门帘 (商家为了展示门帘，必须拍一整扇极其气派的庭院双开门！)
-    "patio glass sliding door"          # 庭院玻璃推拉门
+    # 巧妙利用周边商品，逼迫亚马逊展示“室内楼梯全景实景图”
+    "indoor spiral staircase kit",          # 室内旋转楼梯套件 (高概率出全景实装图)
+    "pull down attic stairs wooden",        # 木质折叠阁楼楼梯 (真实的室内走廊/阁楼场景)
+    "indoor stair railing kit modern",      # 现代室内楼梯扶手套件 (必然依托于完整的楼梯展示)
+    "floating stairs indoor hardware",      # 室内悬浮楼梯五金配件 (展示极简现代风楼梯)
+    "staircase chandelier long modern"      # 楼梯长吊灯 (绝杀！这种商品的主图100%是宏大的室内楼梯全景)
 ]
 
-PAGES_PER_KEYWORD = 10            # 每个关键词抓取几页 (建议调小一点，因为词变多了)
-CUSTOM_ITEM_NAME = "Adoor"     
-SAVE_FOLDER_NAME = "Adoor" 
-MAX_WORKERS = 20  # 并发下载图片的线程数
+# ⛔️ 致命黑名单：精准斩杀亚马逊上的“伪楼梯”商品
+BANNED_WORDS = [
+    'pet', 'dog', 'cat', 'puppy', 'ramp',   # 屏蔽泛滥的宠物楼梯/斜坡
+    'gate', 'baby', 'toddler', 'child',     # 屏蔽婴儿防摔护栏门
+    'outdoor', 'deck', 'pool', 'patio',     # 屏蔽室外步道、泳池阶梯
+    'tread', 'carpet', 'rug', 'mat',        # 屏蔽楼梯防滑垫/地毯 (往往只展示一个台阶的特写)
+    'sticker', 'decal', 'wall art',         # 屏蔽贴在台阶上的装饰贴纸
+    'step stool', 'ladder'                  # 屏蔽普通的人字梯/小板凳
+]
+
+PAGES_PER_KEYWORD = 6            # 建议先少跑几页测试
+CUSTOM_ITEM_NAME = "Stairs"  
+SAVE_FOLDER_NAME = "Stairs"  
+MAX_WORKERS = 30                 # 并发数
 # =======================================================
 
-
-
 def get_high_res_url(thumb_url):
-    """通过正则清洗亚马逊图片URL，直接把缩略图变成高清大图URL"""
+    """把缩略图变成高清大图"""
     return re.sub(r'\._.*?_\.', '.', thumb_url)
 
 def download_image_task(item):
-    """给多线程使用的下载任务函数"""
+    """多线程下载"""
     img_url = item['High_Res_URL']
     filename = item['Image']
     save_dir = item['Save_Dir']
@@ -72,7 +47,7 @@ def download_image_task(item):
         os.makedirs(save_dir, exist_ok=True)
         
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     }
     try:
         response = requests.get(img_url, headers=headers, stream=True, timeout=10)
@@ -83,8 +58,8 @@ def download_image_task(item):
                     file.write(chunk)
             print(f"  -> 📸 成功: {filename}")
             return True
-    except Exception as e:
-        print(f"  -> ❌ 失败: {filename} ({e})")
+    except Exception:
+        pass
     return False
 
 # ==================== 主流程开始 ====================
@@ -94,88 +69,101 @@ if __name__ == "__main__":
     image_save_directory = os.path.join(current_dir, SAVE_FOLDER_NAME)
     data_file_path = os.path.join(current_dir, f"{SAVE_FOLDER_NAME}_info.xlsx")
 
-    print("🚀 正在启动浏览器...")
+    # print("🚀 正在启动浏览器 (室内楼梯场景图深度抓取模式)...")
+    # co = ChromiumOptions().set_paths(browser_path=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
+    # co.set_argument('--disable-blink-features=AutomationControlled')
+    # co.set_load_mode('eager') 
+    
+    # browser = ChromiumPage(co)
+    # tab = browser.latest_tab
+    # tab.set.timeouts(page_load=5) 
+
+    print("🚀 正在启动浏览器 (开启极速DOM解析模式)...")
     co = ChromiumOptions().set_paths(browser_path=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
     co.set_argument('--disable-blink-features=AutomationControlled')
-    co.set_load_mode('eager') 
+    
+    # ======== 🐎 提速外挂 ========
+    co.no_imgs(True)           # 绝对禁止浏览器下载和渲染任何图片（省下海量带宽和内存）
+    co.mute(True)              # 静音，防止带有自动播放视频的详情页卡死
+    co.set_load_mode('none')   # 核心绝杀：不要等网页转圈加载完！只要基础 HTML 骨架出来了，立刻开始抓取！
+    # ============================
     
     browser = ChromiumPage(co)
     tab = browser.latest_tab
-    tab.set.timeouts(page_load=5) 
+    tab.set.timeouts(page_load=3) # 缩短主页面的容忍度
 
     all_results = []
-    seen_asins = set() # 全局去重，不同关键词搜到同一个商品不会重复下载
-    
-    is_first_scan = True # 用于控制只在第一次打开网页时进行人工安检
+    seen_asins = set() 
+    is_first_scan = True 
 
-    # 【改动2】外层循环遍历所有关键词，内层循环遍历页数
     for keyword in SEARCH_KEYWORDS:
         print(f"\n=========================================")
-        print(f"🔍 正在切换搜索词: 【{keyword}】")
+        print(f"🔍 正在搜索: 【{keyword}】")
         print(f"=========================================")
         
         for page in range(1, PAGES_PER_KEYWORD + 1):
-            print(f"📄 正在极速扫描 【{keyword}】 的第 {page} 页...")
-            # 我们在关键词后面强行加上 -lock -knob -handle -stopper -hardware 
-            # 告诉亚马逊：我不要锁！不要把手！不要挡条！不要五金件！
-            black_magic_filter = "+-lock+-knob+-handle+-stopper+-hardware"
-            search_url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}{black_magic_filter}&page={page}"
-            
+            search_url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}&page={page}"
             try:
                 tab.get(search_url)
             except Exception:
                 tab.stop_loading()
             
-            # 人工安检 (仅在整个程序的第一个网页触发一次)
             if is_first_scan:
-                print("\n" + "⚠️ "*20)
-                print("【人工安检环节】请通过验证码 / 更改美国邮编...")
-                input("👉 确认无误后，按下【回车键 (Enter)】继续！")
-                print("⚠️ "*20 + "\n")
+                print("\n" + "⚠️ "*15)
+                print("【人工安检】请通过验证码 / 确保页面正常加载...")
+                input("👉 确认无误后，按下【回车键】继续！")
+                print("⚠️ "*15 + "\n")
                 tab.refresh()
                 is_first_scan = False
-                try:
-                    tab.wait.eles_loaded('xpath://div[@data-asin and string-length(@data-asin)=10]', timeout=5)
-                except:
-                    pass
 
-            # 智能等待
-            try:
-                tab.wait.eles_loaded('xpath://div[@data-asin and string-length(@data-asin)=10]', timeout=5)
-            except:
-                pass 
-
-            # 加快滚动频率
-            tab.scroll.to_half()
-            time.sleep(0.3) 
-            tab.scroll.to_bottom()
-            time.sleep(0.5) 
-            
-            # 提取当前页所有的商品卡片
+            # 提取搜索页所有的商品 ASIN
+            time.sleep(2)
             product_cards = tab.eles('xpath://div[@data-asin and string-length(@data-asin)=10]')
             
             if not product_cards:
-                print(f"⚠️ 第 {page} 页没有找到商品卡片！可能是被验证码拦截，短暂等待...")
-                time.sleep(2)
+                print(f"⚠️ 第 {page} 页没有找到商品，可能被拦截。")
+                continue
                 
             for card in product_cards:
                 try:
                     asin = card.attr('data-asin')
                     if not asin or asin in seen_asins:
-                        continue # 如果这个商品在之前的关键词里抓过了，直接跳过
-                    
-                    img_ele = card.ele('tag:img')
-                    title_ele = card.ele('tag:h2')
-                    
-                    if not img_ele:
                         continue
                         
-                    thumb_url = img_ele.attr('src')
-                    product_name = title_ele.text if title_ele else "N/A"
-                    clean_url = f"https://www.amazon.com/dp/{asin}"
+                    title_ele = card.ele('tag:h2')
+                    product_name = title_ele.text if title_ele else ""
                     
-                    high_res_url = get_high_res_url(thumb_url)
-                    image_filename = f"{CUSTOM_ITEM_NAME}_{asin}.jpg"
+                    # 🛡️ 第一道防线：标题封杀！带有宠物、婴儿门、地毯的直接扔掉
+                    if any(banned_word in product_name.lower() for banned_word in BANNED_WORDS):
+                        print(f"🚫 过滤掉无关/伪楼梯商品: {asin}")
+                        continue
+
+                    # 🚪 第二道防线：打开新标签页，进入商品详情，抓取带背景的场景图
+                    clean_url = f"https://www.amazon.com/dp/{asin}"
+                    detail_tab = browser.new_tab(clean_url)
+                    detail_tab.set.timeouts(page_load=4)
+                    
+                    # 寻找左侧图片缩略图列表 (跳过第1张白底图，直接抓第3或第4张生活场景图)
+                    scene_img_url = None
+                    try:
+                        detail_tab.wait.eles_loaded('xpath://div[@id="altImages"]//img', timeout=3)
+                        alt_images = detail_tab.eles('xpath://div[@id="altImages"]//img')
+                        
+                        # 如果图片大于3张，拿第3张(索引2)；如果只有2张，拿第2张
+                        if len(alt_images) >= 3:
+                            scene_img_url = alt_images[2].attr('src')
+                        elif len(alt_images) == 2:
+                            scene_img_url = alt_images[1].attr('src')
+                    except Exception:
+                        pass
+                    
+                    detail_tab.close() # 拿完赶紧关掉，节约内存
+                    
+                    if not scene_img_url:
+                        continue # 如果没找到场景图，跳过
+                        
+                    high_res_url = get_high_res_url(scene_img_url)
+                    image_filename = f"{CUSTOM_ITEM_NAME}_{asin}_scene.jpg"
                     
                     all_results.append({
                         'ASIN': asin,
@@ -186,30 +174,25 @@ if __name__ == "__main__":
                         'High_Res_URL': high_res_url,
                         'Save_Dir': image_save_directory
                     })
-                    seen_asins.add(asin) # 记录下抓取过的 ASIN
+                    seen_asins.add(asin) 
+                    print(f"✅ 成功捕获楼梯场景图: {asin}")
+                    
                 except Exception as e:
                     pass
                     
             if page < PAGES_PER_KEYWORD:
-                time.sleep(random.uniform(0.5, 1))
-                
-        # 换词的时候多休息一下，避免被封
-        time.sleep(random.uniform(1.5, 3))
+                time.sleep(random.uniform(1.5, 3.5))
 
     browser.quit()
-    print(f"\n🎯 网页扫描完毕！去重后共提取 {len(all_results)} 个商品。开始多线程极速拔图...")
+    print(f"\n🎯 网页扫描完毕！共提取 {len(all_results)} 个楼梯场景图。开始多线程拔图...")
 
-    # 2. 多线程并发下载图片
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         executor.map(download_image_task, all_results)
 
-    # 3. 保存 Excel
     df = pd.DataFrame(all_results)
     if not df.empty:
         df = df.drop(columns=['High_Res_URL', 'Save_Dir']) 
         df.to_excel(data_file_path, index=False)
-        print(f"\n✅ 任务圆满完成！Excel 数据已保存到 {data_file_path}")
-    else:
-        print("\n❌ 抓取到的数据为空，未生成 Excel 文件。")
+        print(f"\n✅ 任务圆满完成！Excel 保存至 {data_file_path}")
         
     print(f"⏳ 总耗时: {time.time() - start_time:.2f} 秒")

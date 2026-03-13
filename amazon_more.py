@@ -1,153 +1,343 @@
+from DrissionPage import ChromiumPage, ChromiumOptions
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import pandas as pd
+import requests
 import os
-import torch
-import shutil
-from PIL import Image
-from tqdm import tqdm
-from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
+import time
+import random
+import re
+import threading
 
-# ==================== 🎯 核心配置区 ====================
-# 您刚爬取并清洗完毕的原始图片文件夹
-SOURCE_DATASET_DIR = "B"
+# ==================== 🎯 多类别配置区 ====================
+# 每个类别：(文件夹名, 标签名, [关键词列表], [黑名单词])
+CATEGORIES = {
 
-# 脚本将自动生成的、专供 RT-DETR 训练的标准数据集目录
-OUTPUT_DATASET_DIR = "RTDETR_Beams_Dataset"
+    # ── 1. 鱼缸等室内水景 ──────────────────────────────────
+    "Aquarium_Indoor": {
+        "label": "Aquarium",
+        "keywords": [
+            "aquarium fish tank living room decor complete setup",
+            "large fish tank stand combo living room interior",
+            "saltwater reef tank aquascape living room setup",
+            "aquarium coffee table built-in fish tank furniture",
+            "indoor water feature fountain zen room decor",
+        ],
+        "banned": ["outdoor", "pond", "garden", "koi pond", "patio", "reptile", "terrarium",
+                   "toy", "plastic model", "miniature", "backyard"],
+    },
 
-# 文本提示词 (Prompt)：告诉大模型你要框什么
-# 多个特征用英文句号隔开。我们统一定义它们为 class_id = 0 (横梁)
-# TEXT_PROMPT = "exposed ceiling beam. wooden beam. steel ceiling beam."
-TEXT_PROMPT = "beam . ceiling beam ."
+    # ── 2. 窄叶枯萎/假植物 ────────────────────────────────
+    "Narrow_Leaf_Fake_Plant": {
+        "label": "NarrowLeaf_Fake",
+        "keywords": [
+            "artificial grass plant narrow blade indoor home decor",
+            "fake pampas grass dried look tall floor vase indoor",
+            "artificial wheat grass stem bundle home decoration",
+            "faux dried lavender narrow stem indoor arrangement",
+            "artificial reed grass indoor living room tall vase",
+        ],
+        "banned": ["outdoor", "garden", "real", "live", "fresh", "pot soil", "watering",
+                   "succulent", "cactus", "tropical broad leaf"],
+    },
 
-# 阈值设置 (0~1 之间)
-# 阈值太低会把门框当横梁，阈值太高会漏掉暗处的横梁，0.3 是个很好的起点
-BOX_THRESHOLD = 0.15
-TEXT_THRESHOLD = 0.15
-# =======================================================
+    # ── 3. 窄叶鲜活植物 ──────────────────────────────────
+    "Narrow_Leaf_Live_Plant": {
+        "label": "NarrowLeaf_Live",
+        "keywords": [
+            "live grass plant narrow leaf indoor pot home",
+            "snake plant live indoor narrow leaf low light",
+            "live spider plant hanging basket indoor narrow",
+            "dracaena marginata live indoor narrow leaf plant",
+            "live chives herb narrow blade indoor kitchen pot",
+        ],
+        "banned": ["artificial", "fake", "faux", "silk", "plastic", "dried",
+                   "outdoor", "garden", "broad leaf", "tropical"],
+    },
 
-def setup_directories():
-    """创建标准 YOLO/RT-DETR 数据集目录结构"""
-    images_dir = os.path.join(OUTPUT_DATASET_DIR, "images", "train")
-    labels_dir = os.path.join(OUTPUT_DATASET_DIR, "labels", "train")
-    
-    os.makedirs(images_dir, exist_ok=True)
-    os.makedirs(labels_dir, exist_ok=True)
-    return images_dir, labels_dir
+    # ── 4. 宽叶枯萎/假植物 ────────────────────────────────
+    "Wide_Leaf_Fake_Plant": {
+        "label": "WideLeaf_Fake",
+        "keywords": [
+            "artificial monstera plant large leaf indoor decor",
+            "fake fiddle leaf fig tree indoor living room",
+            "artificial tropical palm tree indoor broad leaf",
+            "faux bird of paradise plant tall indoor decor",
+            "artificial banana leaf plant indoor home staging",
+        ],
+        "banned": ["outdoor", "garden", "real", "live", "fresh", "soil",
+                   "narrow", "grass", "succulent", "seed"],
+    },
 
-def generate_yaml():
-    """自动生成供 RT-DETR 训练使用的 data.yaml 配置文件"""
-    yaml_content = f"""
-path: ./  # 数据集根目录
-train: images/train
-val: images/train  # 演示用，暂用训练集兼当验证集，正式训练前可自行划分 10% 到 val 文件夹
+    # ── 5. 宽叶鲜活植物 ──────────────────────────────────
+    "Wide_Leaf_Live_Plant": {
+        "label": "WideLeaf_Live",
+        "keywords": [
+            "live monstera deliciosa plant indoor large leaf",
+            "fiddle leaf fig live tree indoor home decor",
+            "live bird of paradise plant indoor wide leaf",
+            "live pothos wide leaf hanging indoor plant",
+            "live philodendron broad leaf indoor low light",
+        ],
+        "banned": ["artificial", "fake", "faux", "silk", "plastic", "dried",
+                   "outdoor", "garden", "narrow", "grass"],
+    },
 
-# 类别信息
-nc: 1
-names:
-  0: beam
-"""
-    yaml_path = os.path.join(OUTPUT_DATASET_DIR, "data.yaml")
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        f.write(yaml_content.strip())
-    print(f"📄 已生成训练配置文件: {yaml_path}")
+    # ── 6. 落地窗 ────────────────────────────────────────
+    "Floor_to_Ceiling_Window": {
+        "label": "FloorWindow",
+        "keywords": [
+            "floor to ceiling window curtain panel living room",
+            "blackout curtains extra long 108 inch floor window",
+            "sliding glass door curtain floor to ceiling interior",
+            "panoramic window treatment living room full height",
+            "window seat cushion bay floor window interior room",
+        ],
+        "banned": ["outdoor", "garden", "patio", "car", "bathroom small",
+                   "shower", "roller shade only", "mini blind"],
+    },
 
-def convert_to_yolo_format(box, img_width, img_height):
-    """将 Grounding DINO 的绝对坐标 [xmin, ymin, xmax, ymax] 转换为 YOLO 归一化坐标"""
-    xmin, ymin, xmax, ymax = box
-    
-    # 计算中心点和宽高
-    x_center = (xmin + xmax) / 2.0
-    y_center = (ymin + ymax) / 2.0
-    width = xmax - xmin
-    height = ymax - ymin
-    
-    # 归一化 (除以图片的宽高)
-    x_center /= img_width
-    y_center /= img_height
-    width /= img_width
-    height /= img_height
-    
-    # 确保数值不越界 (限制在 0.0 到 1.0 之间)
-    x_center = max(0.0, min(1.0, x_center))
-    y_center = max(0.0, min(1.0, y_center))
-    width = max(0.0, min(1.0, width))
-    height = max(0.0, min(1.0, height))
-    
-    return x_center, y_center, width, height
+    # ── 7. 小窗 ──────────────────────────────────────────
+    "Small_Window": {
+        "label": "SmallWindow",
+        "keywords": [
+            "small window curtain cafe valance kitchen bathroom",
+            "bathroom window privacy film frosted small interior",
+            "small window roman shade inside mount bedroom",
+            "half window sheer curtain kitchen small window",
+            "window panel short tier curtain small interior room",
+        ],
+        "banned": ["floor to ceiling", "patio door", "sliding door", "panoramic",
+                   "outdoor", "garden", "exterior storm window"],
+    },
 
-def main():
-    images_train_dir, labels_train_dir = setup_directories()
-    generate_yaml()
-    
-    # 1. 加载大模型 (自动使用 GPU 进行推理，极大地加速标注过程)
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    device ="cpu"
-    print(f"🤖 正在加载 Grounding DINO 模型 (计算设备: {device})... 首次运行需下载模型权重。")
-    
-    model_id = "IDEA-Research/grounding-dino-base"
-    processor = AutoProcessor.from_pretrained(model_id)
-    model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id).to(device)
-    
-    # 2. 收集所有图片路径
-    all_image_paths = []
-    for root, _, files in os.walk(SOURCE_DATASET_DIR):
-        for file in files:
-            if file.lower().endswith(('.jpg', '.jpeg', '.png')):
-                all_image_paths.append(os.path.join(root, file))
-                
-    print(f"📦 扫描完毕，共发现 {len(all_image_paths)} 张待标注图片，启动自动化流水线！")
+    # ── 8. 入户门 ────────────────────────────────────────
+    "Entry_Door": {
+        "label": "EntryDoor",
+        "keywords": [
+            "front entry door wreath hanger interior foyer decor",
+            "entry door smart lock keypad indoor entryway",
+            "front door indoor draft stopper entryway rug set",
+            "entry door sidelight curtain panel foyer interior",
+            "front door bell camera indoor entryway hallway view",
+        ],
+        "banned": ["interior door", "bedroom door", "bathroom door", "cabinet",
+                   "pet door", "dog door", "garage door", "storm door exterior only",
+                   "sliding barn"],
+    },
 
-    # 3. 遍历图片进行自动化推理
-    for img_path in tqdm(all_image_paths, desc="Auto-Labeling Progress"):
-        try:
-            image = Image.open(img_path).convert("RGB")
-            img_width, img_height = image.size
-            
-            # 预处理输入
-            inputs = processor(images=image, text=TEXT_PROMPT, return_tensors="pt").to(device)
-            
-            # 模型推理
-            with torch.no_grad():
-                outputs = model(**inputs)
-            
-            # 后处理：提取边界框 (只保留置信度大于设定阈值的框)
-            results = processor.post_process_grounded_object_detection(
-                outputs,
-                inputs.input_ids,
-                threshold=BOX_THRESHOLD,
-                text_threshold=TEXT_THRESHOLD,
-                target_sizes=[image.size[::-1]]
-            )[0]
-            
-            boxes = results["boxes"].cpu().numpy()
-            scores = results["scores"].cpu().numpy()
-            
-            if len(scores) > 0:
-                            print(f"[{base_name}] 找到目标! 最高得分: {max(scores):.3f}")
-            else:
-                            print(f"[{base_name}] 模型得分低于 0.15，啥也没看见...")
+    # ── 9. 室内门 ────────────────────────────────────────
+    "Interior_Door": {
+        "label": "InteriorDoor",
+        "keywords": [
+            "interior barn door sliding hardware bedroom living room",
+            "interior French door glass panel bedroom office",
+            "interior door knob set bedroom hallway modern",
+            "pocket door hardware kit interior room divider",
+            "interior door panel solid core bedroom sound proof",
+        ],
+        "banned": ["front door", "entry door", "exterior", "garage", "pet door",
+                   "storm door", "screen door", "outdoor", "cabinet door small"],
+    },
+}
 
-            # 只有当模型在图里发现了至少一个横梁，我们才把它加入训练集！
-            # 这能自动剔除那些完全没有横梁的废图，提高数据集纯度
-            if len(boxes) > 0:
-                base_name = os.path.splitext(os.path.basename(img_path))[0]
-                
-                # 拷贝图片到标准目录
-                new_img_path = os.path.join(images_train_dir, f"{base_name}.jpg")
-                shutil.copy2(img_path, new_img_path)
-                
-                # 写入 YOLO 格式的 txt 标注文件
-                txt_path = os.path.join(labels_train_dir, f"{base_name}.txt")
-                with open(txt_path, "w", encoding="utf-8") as f:
-                    for box, score in zip(boxes, scores):
-                        x_c, y_c, w, h = convert_to_yolo_format(box, img_width, img_height)
-                        # 类别 ID 统一为 0 (代表横梁)，保留 6 位小数
-                        f.write(f"0 {x_c:.6f} {y_c:.6f} {w:.6f} {h:.6f}\n")
-                        
-        except Exception as e:
-            print(f"\n[!] 处理图片失败跳过: {img_path} | 错误: {e}")
+PAGES_PER_KEYWORD = 10    # 每个关键词爬几页
+MAX_BROWSER_TABS = 5     # 同时开几个详情页标签（太多易被封）
+MAX_DOWNLOAD_WORKERS = 30  # 下载线程数
+SCENE_IMG_INDEX = 2      # 取第几张图（从0计，2=第3张场景图）
 
-    print("\n🎉 自动化标注圆满完成！")
-    print(f"🚀 数据集已重构完毕，存放在: {OUTPUT_DATASET_DIR}")
-    print("您可以直接将该目录丢给 RT-DETR 启动训练了！")
+# ==========================================================
 
+def get_high_res_url(thumb_url):
+    return re.sub(r'\._.*?_\.', '.', thumb_url)
+
+def download_image_task(item):
+    img_url = item['High_Res_URL']
+    filename = item['Image']
+    save_dir = item['Save_Dir']
+    os.makedirs(save_dir, exist_ok=True)
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    try:
+        r = requests.get(img_url, headers=headers, stream=True, timeout=10)
+        if r.status_code == 200:
+            with open(os.path.join(save_dir, filename), 'wb') as f:
+                for chunk in r.iter_content(1024):
+                    f.write(chunk)
+            print(f"  📸 {filename}")
+            return True
+    except Exception:
+        pass
+    return False
+
+def scrape_category(browser, tab, category_name, config, base_dir, seen_asins_global, lock):
+    """爬取单个类别，返回结果列表"""
+    label = config["label"]
+    keywords = config["keywords"]
+    banned = config["banned"]
+    save_dir = os.path.join(base_dir, category_name)
+    results = []
+    local_seen = set()
+
+    print(f"\n{'='*50}")
+    print(f"🗂️  开始爬取类别: 【{category_name}】标签: {label}")
+    print(f"{'='*50}")
+
+    for keyword in keywords:
+        print(f"\n  🔍 关键词: {keyword}")
+        for page in range(1, PAGES_PER_KEYWORD + 1):
+            url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}&page={page}"
+            try:
+                tab.get(url)
+            except Exception:
+                tab.stop_loading()
+
+            time.sleep(random.uniform(1.5, 2.5))
+            cards = tab.eles('xpath://div[@data-asin and string-length(@data-asin)=10]')
+            if not cards:
+                print(f"    ⚠️ 第{page}页无商品，跳过")
+                continue
+
+            for card in cards:
+                try:
+                    asin = card.attr('data-asin')
+                    if not asin:
+                        continue
+
+                    # 全局去重（同一个ASIN只采集一次）
+                    with lock:
+                        if asin in seen_asins_global:
+                            continue
+                        if asin in local_seen:
+                            continue
+
+                    title_ele = card.ele('tag:h2')
+                    product_name = title_ele.text if title_ele else ""
+
+                    if any(b.lower() in product_name.lower() for b in banned):
+                        print(f"    🚫 过滤: {asin} | {product_name[:40]}")
+                        continue
+
+                    clean_url = f"https://www.amazon.com/dp/{asin}"
+                    detail_tab = browser.new_tab(clean_url)
+                    detail_tab.set.timeouts(page_load=4)
+
+                    scene_img_url = None
+                    try:
+                        detail_tab.wait.eles_loaded('xpath://div[@id="altImages"]//img', timeout=3)
+                        alt_images = detail_tab.eles('xpath://div[@id="altImages"]//img')
+                        if len(alt_images) > SCENE_IMG_INDEX:
+                            scene_img_url = alt_images[SCENE_IMG_INDEX].attr('src')
+                        elif len(alt_images) >= 2:
+                            scene_img_url = alt_images[1].attr('src')
+                        elif len(alt_images) == 1:
+                            scene_img_url = alt_images[0].attr('src')
+                    except Exception:
+                        pass
+                    finally:
+                        detail_tab.close()
+
+                    if not scene_img_url:
+                        continue
+
+                    high_res = get_high_res_url(scene_img_url)
+                    img_filename = f"{label}_{asin}_scene.jpg"
+
+                    results.append({
+                        'Category': category_name,
+                        'ASIN': asin,
+                        'Original_Name': product_name,
+                        'Label': label,
+                        'Image': img_filename,
+                        'URL': clean_url,
+                        'High_Res_URL': high_res,
+                        'Save_Dir': save_dir,
+                    })
+
+                    with lock:
+                        seen_asins_global.add(asin)
+                    local_seen.add(asin)
+                    print(f"    ✅ {asin} | {product_name[:45]}")
+
+                except Exception:
+                    pass
+
+            if page < PAGES_PER_KEYWORD:
+                time.sleep(random.uniform(1.0, 2.5))
+
+    print(f"\n  🎯 【{category_name}】完成，采集 {len(results)} 张")
+    return results
+
+
+# ==================== 主流程 ====================
 if __name__ == "__main__":
-    main()
+    import sys
+    start_time = time.time()
+    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "TrainingData")
+
+    print("🚀 启动浏览器（极速DOM模式）...")
+    co = ChromiumOptions().set_paths(browser_path=r'C:\Program Files\Google\Chrome\Application\chrome.exe')
+    co.set_argument('--disable-blink-features=AutomationControlled')
+    co.no_imgs(True)
+    co.mute(True)
+    co.set_load_mode('none')
+
+    browser = ChromiumPage(co)
+    tab = browser.latest_tab
+    tab.set.timeouts(page_load=3)
+
+    # ── 人工验证一次 ──
+    first_url = "https://www.amazon.com/s?k=aquarium+fish+tank+living+room"
+    try:
+        tab.get(first_url)
+    except Exception:
+        tab.stop_loading()
+
+    print("\n" + "⚠️ "*15)
+    print("【首次人工安检】请通过验证码/确保页面正常加载...")
+    input("👉 确认正常后按【回车键】继续！")
+    print("⚠️ "*15 + "\n")
+
+    # ── 逐类别爬取（串行，避免被Amazon封） ──
+    all_results = []
+    seen_asins_global = set()
+    lock = threading.Lock()
+
+    for cat_name, cat_config in CATEGORIES.items():
+        cat_results = scrape_category(
+            browser, tab,
+            cat_name, cat_config,
+            base_dir,
+            seen_asins_global, lock
+        )
+        all_results.extend(cat_results)
+
+    browser.quit()
+    print(f"\n🌐 全部类别扫描完毕！共 {len(all_results)} 条记录，开始多线程下载图片...")
+
+    # ── 多线程下载 ──
+    with ThreadPoolExecutor(max_workers=MAX_DOWNLOAD_WORKERS) as executor:
+        futures = [executor.submit(download_image_task, item) for item in all_results]
+        done = sum(1 for f in as_completed(futures) if f.result())
+    print(f"  ✅ 成功下载 {done} / {len(all_results)} 张图片")
+
+    # ── 保存Excel（按类别分sheet） ──
+    excel_path = os.path.join(base_dir, "ALL_categories_info.xlsx")
+    os.makedirs(base_dir, exist_ok=True)
+    df_all = pd.DataFrame(all_results).drop(columns=['High_Res_URL', 'Save_Dir'], errors='ignore')
+
+    with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
+        df_all.to_excel(writer, sheet_name='ALL', index=False)
+        for cat in CATEGORIES:
+            df_cat = df_all[df_all['Category'] == cat]
+            if not df_cat.empty:
+                sheet_name = cat[:31]  # Excel sheet名最长31字符
+                df_cat.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    print(f"\n📊 Excel 已保存: {excel_path}")
+    print(f"📁 图片根目录: {base_dir}")
+    print(f"⏳ 总耗时: {time.time() - start_time:.2f} 秒")
+
+    # ── 打印各类别统计 ──
+    print("\n📈 各类别采集统计:")
+    for cat in CATEGORIES:
+        count = sum(1 for r in all_results if r['Category'] == cat)
+        print(f"  {cat:<35} {count} 张")
